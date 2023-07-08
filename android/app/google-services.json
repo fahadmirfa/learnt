@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "873616762076",
+    "project_id": "learn-cc23a",
+    "storage_bucket": "learn-cc23a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873616762076:android:b2c3edb43f84809a260019",
+        "android_client_info": {
+          "package_name": "com.mirfa.learnt.learnt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "873616762076-rv9q3grgc4fr4fuc7gd1l8a6k91grjnn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7m6QkynXPx12QuFqpAXQnKtX3RiznidA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "873616762076-rv9q3grgc4fr4fuc7gd1l8a6k91grjnn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
