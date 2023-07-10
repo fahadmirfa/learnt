@@ -1,13 +1,15 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg_provider/flutter_svg_provider.dart';
 import 'package:learnt/ui/auth/register_page.dart';
+import 'package:learnt/ui/dashboard/dashboard_screen.dart';
 
 import '../../constants.dart';
+import '../../utils/utils.dart';
 import '../../widgets/my_password_field.dart';
 import '../../widgets/my_text_button.dart';
 import '../../widgets/my_text_field.dart';
-import '../homescreen.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -16,6 +18,7 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   bool isPasswordVisible = true;
+  bool _isLoading = false; // Variable to track loading state
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -28,26 +31,100 @@ class _SignInPageState extends State<SignInPage> {
     r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$',
   );
 
-  void signInButtonPressed() {
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+  Future<void> saveCredentials(String email, String password) async {
+    await _secureStorage.write(
+      key: 'email',
+      value: email,
+    );
+    await _secureStorage.write(
+      key: 'password',
+      value: password,
+    );
+  }
+
+  Future<String?> getEmail() async {
+    return await _secureStorage.read(key: 'email');
+  }
+
+  Future<String?> getPassword() async {
+    return await _secureStorage.read(key: 'password');
+  }
+
+  void signInButtonPressed() async {
     if (_formKey.currentState!.validate()) {
       // Form fields are valid, proceed with sign-in logic
       String email = _emailController.text;
       String password = _passwordController.text;
 
-      // Perform sign-in logic with the obtained values
+      try {
+        setState(() {
+          _isLoading = true; // Start loading
+        });
 
-      // Reset the form fields
-      _emailController.clear();
-      _passwordController.clear();
+        // Perform sign-in logic with the obtained values
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+          email: email.toString(),
+          password: password.toString(),
+        );
 
-      // Navigate to the home screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      );
+        // Save the email and password
+        await saveCredentials(email, password);
+
+        // Sign-in successful, navigate to the home screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DashboardScreen(),
+          ),
+        );
+      } catch (error) {
+        // Handle sign-in errors
+        print('Sign-in error: $error');
+        // Show an error message to the user or handle the error in any other way
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Sign-in Failed'),
+            content: Text(error.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close the dialog
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false; // Stop loading
+        });
+      }
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Load saved email and password (if any)
+    getEmail().then((savedEmail) {
+      if (savedEmail != null) {
+        setState(() {
+          _emailController.text = savedEmail;
+        });
+      }
+    });
+    getPassword().then((savedPassword) {
+      if (savedPassword != null) {
+        setState(() {
+          _passwordController.text = savedPassword;
+        });
+      }
+    });
   }
 
   @override
@@ -144,7 +221,7 @@ class _SignInPageState extends State<SignInPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                CupertinoPageRoute(
+                                MaterialPageRoute(
                                   builder: (context) => RegisterPage(),
                                 ),
                               );
@@ -161,7 +238,9 @@ class _SignInPageState extends State<SignInPage> {
                       SizedBox(
                         height: 20,
                       ),
-                      MyTextButton(
+                      _isLoading
+                          ? CircularProgressIndicator() // Show loading indicator while logging in
+                          : MyTextButton(
                         buttonName: 'Sign In',
                         onTap: signInButtonPressed,
                         bgColor: Colors.white,
